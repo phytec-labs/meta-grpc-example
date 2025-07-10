@@ -31,20 +31,23 @@ meta-grpc-example/
 ### Yocto/BitBake
 
 1. Add the layer to your build:
-   ```bash
-   bitbake-layers add-layer meta-grpc-example
+```bash
+bitbake-layers add-layer meta-grpc-example
+```
+
+2. Including the package:
+```bash
+IMAGE_INSTALL:append = " \
+        grpc \
+        grpc-hello \
+"
    ```
 
-2. Build the package:
-   ```bash
-   bitbake grpc-hello
-   ```
-
-### Running the Server
+## Running the Server
 
 ```bash
 # Start the gRPC server (listens on all interfaces, port 50051)
-./grpc_server
+grpc_server
 ```
 
 The server will output:
@@ -52,17 +55,17 @@ The server will output:
 Server listening on 0.0.0.0:50051
 ```
 
-### Running the Client
+## Talking to Server using the Client
 
 ```bash
 # Connect to local server with default settings
-./grpc_client
+grpc_client
 
 # Connect to remote server
-./grpc_client <server_address:port>
+grpc_client <server_address:port>
 
 # Connect with custom name
-./grpc_client <server_address:port> "Your Name"
+grpc_client <server_address:port> "Your Name"
 ```
 
 Example output:
@@ -75,6 +78,55 @@ Received: Hello Embedded User #1 (count: 1)
 Received: Hello Embedded User #2 (count: 2)
 Received: Hello Embedded User #3 (count: 3)
 Received: Hello Embedded User #4 (count: 4)
+```
+
+## Talking to Server using Ubuntu
+
+### Installing grpcurl
+
+Since reflection is enabled, you can test the server using `grpcurl`.
+
+#### Snap Store Install (Ubuntu)
+
+You can install grpcurl using the snap package:
+
+```bash
+snap install grpcurl
+```
+
+### Testing with grpcurl using plaintext
+
+```bash
+# Call the SayHello method
+grpcurl -plaintext -d '{"name":"Ubuntu"}' <server_address>:50051 hello.Greeter/SayHello
+
+# Test streaming
+grpcurl -plaintext -d '{"name":"Stream Ubuntu"}' <server_address>:50051 hello.Greeter/SayHelloStream
+```
+
+Example Output:
+
+```bash
+:~$ grpcurl -plaintext -d '{"name":"Stream Ubuntu"}' 192.168.3.63:50051 hello.Greeter/SayHelloStream
+{
+  "message": "Hello Stream Ubuntu #0"
+}
+{
+  "message": "Hello Stream Ubuntu #1",
+  "count": 1
+}
+{
+  "message": "Hello Stream Ubuntu #2",
+  "count": 2
+}
+{
+  "message": "Hello Stream Ubuntu #3",
+  "count": 3
+}
+{
+  "message": "Hello Stream Ubuntu #4",
+  "count": 4
+}
 ```
 
 ## Protocol Definition
@@ -91,20 +143,7 @@ service Greeter {
 - **SayHello**: Simple unary call returning a greeting
 - **SayHelloStream**: Returns 5 streaming responses with a 500ms delay between each
 
-### Testing with grpcurl
 
-Since reflection is enabled, you can test the server using `grpcurl`:
-
-```bash
-# List available services
-grpcurl -plaintext localhost:50051 list
-
-# Call the SayHello method
-grpcurl -plaintext -d '{"name":"Test"}' localhost:50051 hello.Greeter/SayHello
-
-# Test streaming
-grpcurl -plaintext -d '{"name":"Stream Test"}' localhost:50051 hello.Greeter/SayHelloStream
-```
 ## License
 
 This project is licensed under the MIT License - see the [COPYING.MIT](COPYING.MIT) file for details.
